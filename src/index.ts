@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import authRoutes from './routes/auth'
+import productRoutes from './routes/products'
 import dotenv from 'dotenv'
 import { PrismaClient } from "@prisma/client"; 
 dotenv.config({path: '.env'})
@@ -16,11 +17,25 @@ app.get("/", (req: Request, res: Response) => {
 
 
 app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
 
-export const prisma = new PrismaClient({
+export const prismaClient = new PrismaClient({
   log:['query']
-});
+})
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+async function startServer() {
+  try {
+    await prismaClient.$connect();
+    console.log("Database connected");
+
+    app.listen(PORT, () => {
+      console.log("Server running at http://localhost:3000");
+    });
+  } catch (err) {
+    console.error(" Database connection failed:", err);
+    process.exit(1); 
+  }
+}
+
+startServer();

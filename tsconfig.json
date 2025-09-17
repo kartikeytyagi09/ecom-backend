@@ -9,19 +9,8 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
 
-
-
-  
-    // Environment Settings
-    // See also https://aka.ms/tsconfig/module
-    // "module": "nodenext",
-    // "target": "esnext",
-    "types": [],
-    // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
-
+    "types": ["node", "express"],
+    "typeRoots": ["./src/types", "./node_modules/@types"],
     // Other Outputs
     "sourceMap": true,
     "declaration": true,
@@ -39,10 +28,10 @@
     // "noFallthroughCasesInSwitch": true,
     // "noPropertyAccessFromIndexSignature": true,
 
+
+    "strict": false,   
     "noImplicitAny": false,
-    "strict": true,
     "jsx": "react-jsx",
-    // "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     // "moduleDetection": "force",
