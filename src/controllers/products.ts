@@ -15,7 +15,7 @@ export const createProduct = async (req: Request, res: Response) => {
         name,
         description,
         price,
-        tags: tags || "",
+        tags:  Array.isArray(tags) ? tags.join(".") : tags || "",
       },
     });
 
@@ -28,5 +28,76 @@ export const createProduct = async (req: Request, res: Response) => {
       });
     }
     return res.status(500).json({ error: "Failed to create product", details: error });
+  }
+};
+
+
+export const updateProduct = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    let data = { ...req.body };
+
+    if (Array.isArray(data.tags)) {
+      data.tags = data.tags.join(".");
+    }
+
+    const updatedProduct = await prismaClient.product.update({
+      where: { id: Number(id) },
+      data,
+    });
+
+    return res.status(200).json(updatedProduct);
+  } catch (err: any) {
+    if (err.code === "P2025") {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    console.error(err);
+    return res.status(500).json({ error: "Failed to update product" });
+  }
+};
+
+export const deleteProduct = async (req: Request, res: Response) => {
+  try {
+    const id = +req.params.id; // convert string to number
+    const existingProduct = await prismaClient.product.findUnique({
+      where: { id },
+    });
+
+    if (!existingProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    await prismaClient.product.delete({
+      where: { id },
+    });
+
+    return res.status(200).json({ message: "Product deleted successfully" });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: "Failed to delete product", details: error });
+  }
+};
+
+
+export const listProduct =async(req:Request, res:Response)=>{
+
+}
+
+
+export const getProductById = async (req: Request, res: Response) => {
+  try {
+    const id = +req.params.id;
+    const product = await prismaClient.product.findUnique({
+      where: { id },
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    return res.json(product);
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to fetch product" });
   }
 };

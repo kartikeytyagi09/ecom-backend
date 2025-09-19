@@ -7,5 +7,5 @@ export const ProductSchema = z.object({
     price: z.string().refine((val) => !isNaN(Number(val)), {
       message: "Price must be a valid number",
     }),
-    tags: z.string().optional(),
+    tags: z.union([z.string(), z.array(z.string())]).optional(),
 });
