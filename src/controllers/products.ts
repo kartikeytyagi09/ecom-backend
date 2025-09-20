@@ -22,12 +22,11 @@ export const createProduct = async (req: Request, res: Response) => {
     return res.status(201).json({ message: "Product created successfully", product });
   } catch (error: any) {
     if (error.name === "ZodError") {
-      return res.status(400).json({
-        error: "Validation failed",
-        details: error.errors.map((err: any) => err.message),
-      });
-    }
-    return res.status(500).json({ error: "Failed to create product", details: error });
+  return res.status(400).json({
+    error: "Validation failed",
+    details: error.issues.map(issue => issue.message),
+  });
+}
   }
 };
 
@@ -79,25 +78,37 @@ export const deleteProduct = async (req: Request, res: Response) => {
   }
 };
 
+export const listProduct = async (req: Request, res: Response) => {
+  try {
+    const products = await prismaClient.product.findMany({
+      orderBy: { createdAt: "desc" }, // latest products first
+    });
 
-export const listProduct =async(req:Request, res:Response)=>{
-
-}
-
+    return res.status(200).json({
+      message: "Products fetched successfully",
+      products,
+    });
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({
+      error: "Failed to fetch products",
+      details: error.message,
+    });
+  }
+};
 
 export const getProductById = async (req: Request, res: Response) => {
   try {
-    const id = +req.params.id;
-    const product = await prismaClient.product.findUnique({
-      where: { id },
-    });
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid product ID" });
 
-    if (!product) {
-      return res.status(404).json({ error: "Product not found" });
-    }
+    const product = await prismaClient.product.findUnique({ where: { id } });
 
-    return res.json(product);
-  } catch (error) {
-    return res.status(500).json({ error: "Failed to fetch product" });
+    if (!product) return res.status(404).json({ error: "Product not found" });
+
+    return res.status(200).json(product);
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({ error: "Failed to fetch product", details: error.message });
   }
 };
