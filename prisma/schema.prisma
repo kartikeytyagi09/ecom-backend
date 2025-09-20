@@ -20,17 +20,29 @@ model User {
   role Role @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
+  addresses Address[]
   @@map("users")
 }
 
+model Address{
+  id  Int  @id @default(autoincrement())
+  lineOne String
+  lineTwo String
+  city String
+  coutry String
+  pincode Int
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+  @@map("addresses")
+}
+
 model Product {
-  id Int @id @default(autoincrement())
-  name String
+  id    Int @id @default(autoincrement())
+  name  String
   description String @db.Text
   price Decimal
-  tags String
+  tags  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
+  @@map("products")
 }

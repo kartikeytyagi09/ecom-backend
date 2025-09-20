@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import authRoutes from './routes/auth'
+import authRoutes from './routes/auth.routes'
 import productRoutes from './routes/products'
 import dotenv from 'dotenv'
 import { PrismaClient } from "@prisma/client"; 
@@ -17,6 +17,7 @@ app.get("/", (req: Request, res: Response) => {
 
 
 app.use("/api/auth", authRoutes);
+app.use("/api/address", );
 app.use("/api/products", productRoutes);
 
 export const prismaClient = new PrismaClient({

@@ -29,7 +29,9 @@ export const signup = async (req: Request, res: Response) => {
     return res.status(201).json({ message: "User created successfully", user });
 
     }catch (error: any) {
-        console.error("Signup Error:", error);
+        if(error instanceof ZodError){
+          res.status(400).json({err:"wrong input"})
+        }
         return res.status(500).json({ 
           error: "Signup failed", 
           details: error.message || error 
@@ -61,6 +63,9 @@ export const login = async (req: Request, res: Response) => {
 
     return res.status(200).json({ message: "Login successful", token });
   } catch (error) {
+    if(error instanceof ZodError){
+          res.status(400).json({err:"wrong input"})
+    }
     return res.status(500).json({ error: "Login failed", details: error });
   }
 };
