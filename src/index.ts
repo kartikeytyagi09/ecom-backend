@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import authRoutes from './routes/auth.routes'
 import productRoutes from './routes/products'
+import addressRoutes from './routes/user.routes'
 import dotenv from 'dotenv'
 import { PrismaClient } from "@prisma/client"; 
 dotenv.config({path: '.env'})
@@ -17,7 +18,7 @@ app.get("/", (req: Request, res: Response) => {
 
 
 app.use("/api/auth", authRoutes);
-app.use("/api/address", );
+app.use("/api/address",addressRoutes );
 app.use("/api/products", productRoutes);
 
 export const prismaClient = new PrismaClient({
