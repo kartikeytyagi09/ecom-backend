@@ -5,9 +5,12 @@ import { addAddress, deleteAddress, getAddresses } from "../controllers/user.con
 
 const router= express.Router()
 
-router.post('/address',[authMiddleware,adminMiddleware],addAddress)
-router.delete('/address/:id',[authMiddleware,adminMiddleware],deleteAddress)
-router.get("/address", [authMiddleware,adminMiddleware],getAddresses)
+router.post('/input',[authMiddleware,adminMiddleware],addAddress)
+router.delete('/:id',authMiddleware,deleteAddress)
+router.get("/access/:id", authMiddleware,getAddresses)
+
+//update it
+router.get("/update", authMiddleware,getAddresses)
 
 
 export default router;

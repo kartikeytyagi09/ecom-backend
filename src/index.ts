@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import authRoutes from './routes/auth.routes'
 import productRoutes from './routes/products'
 import addressRoutes from './routes/user.routes'
+import cookieParser from "cookie-parser";
 import dotenv from 'dotenv'
 import { PrismaClient } from "@prisma/client"; 
 dotenv.config({path: '.env'})
@@ -12,10 +13,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello from TypeScript + Node.js backend!");
-});
-
+app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/address",addressRoutes );

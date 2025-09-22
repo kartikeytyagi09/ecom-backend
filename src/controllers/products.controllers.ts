@@ -30,7 +30,6 @@ export const createProduct = async (req: Request, res: Response) => {
   }
 };
 
-
 export const updateProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

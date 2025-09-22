@@ -2,10 +2,10 @@ import jwt from "jsonwebtoken";
 import { Request, Response } from "express";
 import { prismaClient } from "..";
 import bcrypt from "bcrypt";
-import { LoginSchema, SignUpSchema } from "../models/user";
+import { LoginSchema, SignUpSchema } from "../models/user.schema";
 import { ZodError } from "zod";
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret"; 
+const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 
 export const signup = async (req: Request, res: Response) => {
   try {
@@ -27,18 +27,15 @@ export const signup = async (req: Request, res: Response) => {
       },
     });
     return res.status(201).json({ message: "User created successfully", user });
-
-    }catch (error: any) {
-        if(error instanceof ZodError){
-          res.status(400).json({err:"wrong input"})
-        }
-        return res.status(500).json({ 
-          error: "Signup failed", 
-          details: error.message || error 
-  });
-}
-
-
+  } catch (error: any) {
+    if (error instanceof ZodError) {
+      res.status(400).json({ err: "wrong input" });
+    }
+    return res.status(500).json({
+      error: "Signup failed",
+      details: error.message || error,
+    });
+  }
 };
 
 export const login = async (req: Request, res: Response) => {
@@ -56,17 +53,23 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email,role: user.role }, 
-      JWT_SECRET,                         
-      { expiresIn: "1h" }                 
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "1d" }
     );
+
+    res.cookie("token", token, {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === "production", 
+      sameSite: "strict", 
+      maxAge: 24 * 60 * 60 * 1000, 
+    });
 
     return res.status(200).json({ message: "Login successful", token });
   } catch (error) {
-    if(error instanceof ZodError){
-          res.status(400).json({err:"wrong input"})
+    if (error instanceof ZodError) {
+      res.status(400).json({ err: "wrong input" });
     }
     return res.status(500).json({ error: "Login failed", details: error });
   }
 };
-  

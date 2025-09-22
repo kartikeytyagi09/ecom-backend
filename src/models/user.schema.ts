@@ -18,5 +18,11 @@ export const AddressSchema = z.object({
   city: z.string().min(1, "City is required"),
   country: z.string().min(1, "Country is required"),
   pincode: z.number().max(999999, "Invalid pincode"),
-  userId: z.number(),
+});
+
+export const updateUserSchema = z.object({
+  name: z.string().optional(),
+  // email: z.string().email().optional(),
+  // password: z.string().min(6).optional(),
+  defaultAddress: z.number().int().positive().optional(),
 });
