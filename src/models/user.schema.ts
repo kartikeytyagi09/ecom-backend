@@ -20,6 +20,8 @@ export const AddressSchema = z.object({
   pincode: z.number().max(999999, "Invalid pincode"),
 });
 
+
+// remaning
 export const updateUserSchema = z.object({
   name: z.string().optional(),
   // email: z.string().email().optional(),
