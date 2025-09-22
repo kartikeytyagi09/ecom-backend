@@ -5,7 +5,7 @@ import { addAddress, deleteAddress, getAddresses } from "../controllers/user.con
 
 const router= express.Router()
 
-router.post('/input',[authMiddleware,adminMiddleware],addAddress)
+router.post('/input',authMiddleware,addAddress)
 router.delete('/:id',authMiddleware,deleteAddress)
 router.get("/access/:id", authMiddleware,getAddresses)
 
