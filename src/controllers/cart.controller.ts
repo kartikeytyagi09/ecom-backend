@@ -111,9 +111,41 @@ export const deleteItemsFromCart = async (req: Request, res: Response) => {
 
 
 
-export const changeQuantity=async(req:Request, res:Response)=>{
+export const changeQuantity = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
-}
+    const { productId } = req.params;
+    const { quantity } = req.body;
+
+    if (!productId) return res.status(400).json({ error: "Product ID is required" });
+    if (quantity === undefined || quantity < 1)
+      return res.status(400).json({ error: "Quantity is less than 1" });
+
+    const cart = await prismaClient.cart.findUniqueOrThrow({
+      where: { userId },
+      include: { items: true },
+    });
+
+    const cartItem = cart.items.find((item) => item.productId === Number(productId));
+    if (!cartItem)
+      return res.status(404).json({ error: "Product not found in cart" });
+
+    const updatedItem = await prismaClient.cartItem.update({
+      where: { id: cartItem.id },
+      data: { quantity },
+    });
+
+    return res.status(200).json({ message: "Quantity updated", updatedItem });
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({ error: "Failed to update quantity", details: error.message });
+  }
+};
+
+
+
 export const getCart=async(req:Request, res:Response)=>{
 
 }
