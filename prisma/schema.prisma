@@ -22,7 +22,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   addresses Address[]
-  cartItems CartItem[]
+  cartItems Cart[]
   @@map("users")
 }
 
@@ -50,16 +50,23 @@ model Product {
   cartItems CartItem[]
 }
 
-model CartItem{
-  id        Int @id @default(autoincrement())
-  userId    Int
-  user      User @relation(fields: [userId],references: [id])
-  productId Int
-  product   Product @relation(fields: [productId] ,references: [id])
-  quantity Int
+model Cart {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  items     CartItem[]
   updatedAt DateTime @updatedAt
 }
 
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cartId    Int
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  updatedAt DateTime @updatedAt
+}
 
 // model Order {
 //   id          Int       @id @default(autoincrement())
