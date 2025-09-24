@@ -4,11 +4,14 @@ import { addItemsInCart, applyDiscount, changeQuantity, deleteItemsFromCart, get
 
 const router= express.Router()
 
-router.post('/a',authMiddleware,addItemsInCart)
-router.delete('/:id',authMiddleware, deleteItemsFromCart)
-router.post('/prodtuct/:id',authMiddleware,changeQuantity)
+router.post('/add',authMiddleware,addItemsInCart)
+
+router.delete('/item/:productId',authMiddleware, deleteItemsFromCart)
+
+router.patch('/item/:productId',authMiddleware,changeQuantity)
+
 router.get("/acccess", authMiddleware,getCart)
-// router.post("/cart", authMiddleware,clearCart)
+
 router.patch("/discout", authMiddleware,applyDiscount)
 
 

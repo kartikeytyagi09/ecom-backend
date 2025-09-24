@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { ZodError } from "zod";
+import z, { ZodError } from "zod";
 import { prismaClient } from "..";
 import { CreateCartSchema } from "../models/cart.schema";
 
@@ -78,7 +78,6 @@ export const deleteItemsFromCart = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Product ID is required" });
     }
 
-    // 1. Find the user's cart
     const cart = await prismaClient.cart.findUniqueOrThrow({
       where: { userId },
     });
@@ -142,16 +141,110 @@ export const changeQuantity = async (req: Request, res: Response) => {
     console.error(error);
     return res.status(500).json({ error: "Failed to update quantity", details: error.message });
   }
+};  
+
+
+
+export const getCart = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const cart = await prismaClient.cart.findUnique({
+      where: { userId },
+      include: {
+        items: {
+          include: {
+            product: true, // product details needed
+          },
+        },
+      },
+    });
+
+    if (!cart) return res.status(404).json({ error: "Cart not found" });
+
+    //total
+    const subtotal = cart.items.reduce((acc, item) => {
+      return acc + Number(item.product.price) * item.quantity;
+    }, 0);
+
+    return res.status(200).json({
+      message: "Cart fetched successfully",
+      cart,
+      subtotal,
+    });
+  } catch (error: any) {
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch cart", details: error.message });
+  }
 };
 
 
 
-export const getCart=async(req:Request, res:Response)=>{
+const DiscountSchema = z.object({
+  code: z.string().min(3, "Discount code must be at least 3 characters"),
+});
 
-}
-// export const clearCart=async(req:Request, res:Response)=>{
+// discount data
+const discountRules: Record<string, { type: "percent" | "fixed"; value: number }> = {
+  SAVE10: { type: "percent", value: 10 }, 
+  FLAT100: { type: "fixed", value: 100 }, 
+};
 
-// }
-export const applyDiscount=async(req:Request, res:Response)=>{
+export const applyDiscount = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
-} 
+    const { code } = DiscountSchema.parse(req.body);
+
+    const cart = await prismaClient.cart.findUnique({
+      where: { userId },
+      include: { items: { include: { product: true } } },
+    });
+
+    if (!cart) return res.status(404).json({ error: "Cart not found" });
+
+    // Calculate subtotal
+    const subtotal = cart.items.reduce((acc, item) => {
+      return acc + Number(item.product.price) * item.quantity;
+    }, 0);
+
+    // Find discount rule
+    const discount = discountRules[code.toUpperCase()];
+    if (!discount) {
+      return res.status(400).json({ error: "Invalid discount code" });
+    }
+
+    let discountAmount = 0;
+    if (discount.type === "percent") {
+      discountAmount = (subtotal * discount.value) / 100;
+    } else {
+      discountAmount = discount.value;
+    }
+
+    const total = Math.max(subtotal - discountAmount, 0); // last point 0
+
+    return res.status(200).json({
+      message: "Discount applied",
+      code,
+      subtotal,
+      discount: discountAmount,
+      total,
+    });
+  } catch (error: unknown) {
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: error.issues.map((e) => e.message),
+      });
+    }
+    if (error instanceof Error) {
+      return res
+        .status(500)
+        .json({ error: "Failed to apply discount", details: error.message });
+    }
+    return res.status(500).json({ error: "Unknown error" });
+  }
+};
