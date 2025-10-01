@@ -109,7 +109,6 @@ export const deleteItemsFromCart = async (req: Request, res: Response) => {
 };
 
 
-
 export const changeQuantity = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -142,7 +141,6 @@ export const changeQuantity = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Failed to update quantity", details: error.message });
   }
 };  
-
 
 
 export const getCart = async (req: Request, res: Response) => {
@@ -179,7 +177,6 @@ export const getCart = async (req: Request, res: Response) => {
       .json({ error: "Failed to fetch cart", details: error.message });
   }
 };
-
 
 
 const DiscountSchema = z.object({

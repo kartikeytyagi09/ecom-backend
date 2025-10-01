@@ -14,7 +14,7 @@ export const addAddress = async (req: Request, res: Response) => {
     }
 
     // Optional: check if user still exists
-    await prismaClient.user.findUniqueOrThrow({
+    const user =await prismaClient.user.findUniqueOrThrow({
       where: { id: req.user.id },
     });
 
@@ -40,6 +40,13 @@ export const addAddress = async (req: Request, res: Response) => {
         userId: req.user.id,
       },
     });
+
+    if (!user?.defaultAddress) {
+      await prismaClient.user.update({
+      where: { id: req.user.id },
+      data: { defaultAddress: address.id },
+    });
+  }
 
     return res.status(201).json({
       message: "Address added successfully",
@@ -95,8 +102,6 @@ export const getAddresses = async (req: Request, res: Response) => {
   }
 };
 
-
-// import { error } from "console";
 
 // export const updateUser = async (req: Request, res: Response) => {
 //   try {

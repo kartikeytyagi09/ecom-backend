@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role{
+enum Role {
   ADMIN
   USER
 }
@@ -17,27 +17,60 @@ model User {
   name      String
   email     String   @unique
   password  String
-  role Role @default(USER)
-  deafaultAddress Int?
+  role      Role     @default(USER)
+  defaultAddress Int?
+  addresses Address[]
+  cart Cart?
+  order Order[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  addresses Address[]
-  cartItems Cart[]
   @@map("users")
 }
 
 model Address{
-  id  Int  @id @default(autoincrement())
+  id      Int     @id @default(autoincrement())
   lineOne String
   lineTwo String
-  city String
+  city    String
   country String
   pincode Int
-  userId Int
-  user User @relation(fields: [userId], references: [id])
+  userId  Int
+  user    User    @relation(fields: [userId], references: [id])
+  order Order[]
 
   @@map("addresses")
 }
+
+enum Status {
+  PENDING
+  PAID
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  addressId   Int
+  address     Address     @relation(fields: [addressId], references: [id])
+  totalAmount Decimal
+  status      Status      @default(PENDING)
+  items       OrderItem[]   
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Decimal  // snapshot of product price at purchase
+}
+
 
 model Product {
   id    Int @id @default(autoincrement())
@@ -48,6 +81,7 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   cartItems CartItem[]
+  orderItems OrderItem[]
 }
 
 model Cart {
@@ -68,13 +102,3 @@ model CartItem {
   updatedAt DateTime @updatedAt
 }
 
-// model Order {
-//   id          Int       @id @default(autoincrement())
-//   user        User      @relation(fields: [userId], references: [id])
-//   userId      Int
-//   address     Address   @relation(fields: [addressId], references: [id])
-//   addressId   Int
-//   totalAmount Decimal
-//   status      String    @default("PENDING")
-//   createdAt   DateTime  @default(now())
-// }
