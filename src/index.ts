@@ -1,10 +1,11 @@
 import express, { Request, Response } from "express";
-import authRoutes from './routes/auth.routes'
-import productRoutes from './routes/products'
-import addressRoutes from './routes/user.routes'
-import cartRoutes from './routes/cart.routes'
+import authRoutes from './routes/auth.routes';
+import productRoutes from './routes/products';
+import addressRoutes from './routes/user.routes';
+import cartRoutes from './routes/cart.routes';
+import orderRoutes from './routes/order.routes';
 import cookieParser from "cookie-parser";
-import dotenv from 'dotenv'
+import dotenv from 'dotenv';
 import { PrismaClient } from "@prisma/client"; 
 dotenv.config({path: '.env'})
 
@@ -20,6 +21,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/address",addressRoutes );
 app.use("/api/products", productRoutes);
 app.use("/api/cart",cartRoutes);
+app.use("/api/order",orderRoutes);
 
 export const prismaClient = new PrismaClient({
   log:['query']

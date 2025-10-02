@@ -67,3 +67,31 @@ export const createOrder = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+export const listOrders = async (req: Request, res: Response) => {
+  try {
+
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const orders = await prismaClient.order.findMany({
+      where: { userId },
+      include: {
+        items: {
+          include: { product: true }, 
+        },
+        address: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.status(200).json({ orders });
+  } catch (error: any) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch orders", details: error.message });
+  }
+};
+
