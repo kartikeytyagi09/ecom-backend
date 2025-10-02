@@ -1,6 +1,7 @@
 // controllers/order.controller.ts
 import { Request, Response } from "express";
 import { prismaClient } from "../index"; // adjust import to your prismaClient
+import { Status } from "@prisma/client";
 
 export const createOrder = async (req: Request, res: Response) => {
   try {
@@ -95,3 +96,39 @@ export const listOrders = async (req: Request, res: Response) => {
   }
 };
 
+
+export const cancelOrder=async (req: Request, res: Response) =>{
+  try {
+    
+    const userId= req.user?.id;
+    if(!userId) return res.status(401).json({error:"user not found"});
+
+    const {id}= req.params;
+    if (!id) return res.status(400).json({ error: "Order ID is not passes in params" });
+
+    const order= await prismaClient.order.findUnique({
+      where:{id:Number(id),
+      }
+    })
+
+    if (!order || order.userId !== userId) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    if (order.status !== Status.PENDING){
+      return res.status(400).json({ error: "Only pending orders can be cancelled" });
+    }
+
+    const updatedOrder = await prismaClient.order.update({
+      where: { id: order.id },
+      data: { status: Status.CANCELLED },
+    });  
+
+    return res.status(200).json({ message: "Order cancelled successfully", updatedOrder });
+  
+  } catch (error: any) {
+    console.error("Error cancelling order:", error);
+    return res.status(500).json({ error: "Failed to cancel order", details: error.message });
+  }
+
+}
