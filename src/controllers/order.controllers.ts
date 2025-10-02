@@ -132,3 +132,29 @@ export const cancelOrder=async (req: Request, res: Response) =>{
   }
 
 }
+
+export const updateOrderStatus = async (req: Request, res: Response) => {
+  try {
+
+    const { id } = req.params; 
+    const { status } = req.body;
+
+    if (!id) return res.status(400).json({ error: "Order ID is required" });
+    if (!status || !Object.values(Status).includes(status)) {
+      return res.status(400).json({ error: "Invalid or missing status" });
+    }
+
+    const order = await prismaClient.order.findUnique({ where: { id: Number(id) } });
+    if (!order) return res.status(404).json({ error: "Order not found" });
+
+    const updatedOrder = await prismaClient.order.update({
+      where: { id: order.id },
+      data: { status },
+    });
+
+    return res.status(200).json({ message: "Order status updated", updatedOrder });
+  } catch (error: any) {
+    console.error("Error updating order status:", error);
+    return res.status(500).json({ error: "Failed to update order status", details: error.message });
+  }
+};
