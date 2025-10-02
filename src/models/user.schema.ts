@@ -20,11 +20,14 @@ export const AddressSchema = z.object({
   pincode: z.number().max(999999, "Invalid pincode"),
 });
 
+export const UpdateUserRoleSchema = z.object({
+  role: z.enum(["ADMIN", "USER"]),
+});
 
 // remaning
-export const updateUserSchema = z.object({
-  name: z.string().optional(),
-  // email: z.string().email().optional(),
-  // password: z.string().min(6).optional(),
-  defaultAddress: z.number().int().positive().optional(),
-});
+// export const updateUserSchema = z.object({
+//   name: z.string().optional(),
+//   // email: z.string().email().optional(),
+//   // password: z.string().min(6).optional(),
+//   defaultAddress: z.number().int().positive().optional(),
+// });
