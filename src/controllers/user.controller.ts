@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import { AddressSchema, UpdateUserRoleSchema } from "../models/user.schema";
+import { AddressSchema, changePasswordSchema, UpdateUserRoleSchema } from "../models/user.schema";
 import { prismaClient } from "..";
 import z from "zod";
+import bcrypt from 'bcrypt';
 
  
 export const addAddress = async (req: Request, res: Response) => {
@@ -68,7 +69,6 @@ export const addAddress = async (req: Request, res: Response) => {
   }
 };
 
-
 export const deleteAddress = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
@@ -106,7 +106,6 @@ export const updateUserRole = async (req: Request, res: Response) => {
     const userId = Number(req.params.id);
     if (isNaN(userId)) return res.status(400).json({ error: "Invalid user ID" });
 
-    // Validate the new role
     const { role } = UpdateUserRoleSchema.parse(req.body);
 
     // Update user role
@@ -132,6 +131,48 @@ export const updateUserRole = async (req: Request, res: Response) => {
 
     return res.status(500).json({
       error: "Failed to update user role",
+      details: error instanceof Error ? error.message : String(error),
+    });
+  }
+};
+
+export const changePassword = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    const { oldPassword, newPassword } = changePasswordSchema.parse(req.body);
+
+    // Fetch user
+    const user = await prismaClient.user.findUniqueOrThrow({
+      where: { id: req.user.id },
+    });
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: "Old password is incorrect" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prismaClient.user.update({
+      where: { id: req.user.id },
+      data: { password: hashedPassword },
+    });
+
+    return res.status(200).json({ message: "Password changed successfully" });
+  } catch (error: unknown) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
+    return res.status(500).json({
+      error: "Failed to change password",
       details: error instanceof Error ? error.message : String(error),
     });
   }

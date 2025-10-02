@@ -24,6 +24,11 @@ export const UpdateUserRoleSchema = z.object({
   role: z.enum(["ADMIN", "USER"]),
 });
 
+export const changePasswordSchema = z.object({
+  oldPassword: z.string().min(6),
+  newPassword: z.string().min(6),
+});
+
 // remaning
 // export const updateUserSchema = z.object({
 //   name: z.string().optional(),
