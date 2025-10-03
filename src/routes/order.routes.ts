@@ -11,6 +11,6 @@ router.patch("/:id/cancel", authMiddleware, cancelOrder);
 
 router.patch("/:id/status", [authMiddleware, adminMiddleware], updateOrderStatus);
 
-router.get("/admin/orders", authMiddleware, adminMiddleware, adminListOrders);
+router.get("/admin", [authMiddleware, adminMiddleware], adminListOrders);
 
 export default router;

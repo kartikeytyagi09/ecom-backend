@@ -1,10 +1,13 @@
 import { Request, Response } from "express";
-import { AddressSchema, changePasswordSchema, UpdateUserRoleSchema } from "../models/user.schema";
+import {
+  AddressSchema,
+  changePasswordSchema,
+  UpdateUserRoleSchema,
+} from "../models/user.schema";
 import { prismaClient } from "..";
 import z from "zod";
-import bcrypt from 'bcrypt';
+import bcrypt from "bcrypt";
 
- 
 export const addAddress = async (req: Request, res: Response) => {
   try {
     const parsedData = AddressSchema.parse(req.body);
@@ -14,7 +17,7 @@ export const addAddress = async (req: Request, res: Response) => {
     }
 
     // Optional: check if user still exists
-    const user =await prismaClient.user.findUniqueOrThrow({
+    const user = await prismaClient.user.findUniqueOrThrow({
       where: { id: req.user.id },
     });
 
@@ -43,10 +46,10 @@ export const addAddress = async (req: Request, res: Response) => {
 
     if (!user?.defaultAddress) {
       await prismaClient.user.update({
-      where: { id: req.user.id },
-      data: { defaultAddress: address.id },
-    });
-  }
+        where: { id: req.user.id },
+        data: { defaultAddress: address.id },
+      });
+    }
 
     return res.status(201).json({
       message: "Address added successfully",
@@ -71,16 +74,28 @@ export const addAddress = async (req: Request, res: Response) => {
 
 export const deleteAddress = async (req: Request, res: Response) => {
   try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
     const id = Number(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ error: "Invalid address ID" });
+    const address = await prismaClient.address.findUnique({ where: { id } });
+    if (!address || address.userId !== userId) {
+      return res
+        .status(404)
+        .json({ error: "Address not found or unauthorized" });
+    }
 
     const deleted = await prismaClient.address.delete({
       where: { id },
     });
 
-    return res.status(200).json({ message: "Address deleted successfully", deleted });
+    return res
+      .status(200)
+      .json({ message: "Address deleted successfully", deleted });
   } catch (error: any) {
-    return res.status(500).json({ error: "Failed to delete address", details: error.message });
+    return res
+      .status(500)
+      .json({ error: "Failed to delete address", details: error.message });
   }
 };
 
@@ -95,16 +110,21 @@ export const getAddresses = async (req: Request, res: Response) => {
       orderBy: { id: "desc" },
     });
 
-    return res.status(200).json({ message: "Addresses fetched successfully", addresses });
+    return res
+      .status(200)
+      .json({ message: "Addresses fetched successfully", addresses });
   } catch (error: any) {
-    return res.status(500).json({ error: "Failed to fetch addresses", details: error.message });
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch addresses", details: error.message });
   }
 };
 
 export const updateUserRole = async (req: Request, res: Response) => {
   try {
     const userId = Number(req.params.id);
-    if (isNaN(userId)) return res.status(400).json({ error: "Invalid user ID" });
+    if (isNaN(userId))
+      return res.status(400).json({ error: "Invalid user ID" });
 
     const { role } = UpdateUserRoleSchema.parse(req.body);
 
@@ -142,7 +162,6 @@ export const changePassword = async (req: Request, res: Response) => {
 
     const { oldPassword, newPassword } = changePasswordSchema.parse(req.body);
 
-    // Fetch user
     const user = await prismaClient.user.findUniqueOrThrow({
       where: { id: req.user.id },
     });

@@ -80,7 +80,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
 export const listProduct = async (req: Request, res: Response) => {
   try {
     const products = await prismaClient.product.findMany({
-      orderBy: { createdAt: "desc" }, // latest products first
+      orderBy: { createdAt: "desc" },
     });
 
     return res.status(200).json({

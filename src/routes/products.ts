@@ -8,7 +8,7 @@ const router = Router();
 router.post("/create",[ authMiddleware, adminMiddleware],createProduct);
 router.put("/update/:id",[ authMiddleware, adminMiddleware],updateProduct);
 router.delete("/delete/:id",[ authMiddleware, adminMiddleware],deleteProduct);
-router.get("/",[ authMiddleware, adminMiddleware],listProduct);
-router.get("/:id",[ authMiddleware, adminMiddleware],getProductById);
+router.get("/",authMiddleware,listProduct);
+router.get("/:id",authMiddleware, getProductById);
 
 export default router;

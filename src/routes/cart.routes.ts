@@ -10,9 +10,9 @@ router.delete('/item/:productId',authMiddleware, deleteItemsFromCart)
 
 router.patch('/item/:productId',authMiddleware,changeQuantity)
 
-router.get("/acccess", authMiddleware,getCart)
+router.get("/", authMiddleware,getCart)
 
-router.patch("/discout", authMiddleware,applyDiscount)
+router.patch("/discount", authMiddleware,applyDiscount)
 
 
 export default router;
