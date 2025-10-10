@@ -3,13 +3,18 @@ A production-ready e-commerce backend built with Node.js, TypeScript, Express, a
 
 🚀 Features:
 
-🔑 Authentication & Authorization (JWT-based login & role management)\
+🔑 Authentication & Authorization (JWT-based login & role management)
 
 🛒 Product Management (CRUD APIs for products, categories, inventory)
+
 📦 Cart & Orders (add to cart, checkout, order processing)
+
 💳 Payment Integration Ready (modular structure for future payment gateways)
+
 📊 Database with Prisma (PostgreSQL/MySQL supported, migrations included)
+
 🛡️ Error Handling & Validation (centralized error middleware, request validation)
+
 ⚡ Scalable API Design (RESTful endpoints, modular service layer)
 
 🛠 Tech Stack
