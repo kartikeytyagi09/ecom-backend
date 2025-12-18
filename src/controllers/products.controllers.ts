@@ -110,4 +110,4 @@ export const getProductById = async (req: Request, res: Response) => {
     console.error(error);
     return res.status(500).json({ error: "Failed to fetch product", details: error.message });
   }
-};
+}; 
