@@ -4,68 +4,68 @@ import { prismaClient } from "..";
 import { CreateCartSchema } from "../models/cart.schema";
 
 export const addItemsInCart = async (req: Request, res: Response) => {
-  try {
-    const validatedData = CreateCartSchema.parse(req.body);
+    try {
+      const validatedData = CreateCartSchema.parse(req.body);
 
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
 
-    await prismaClient.product.findUniqueOrThrow({
-      where: { id: validatedData.productId },
-    });
-
-    let cart = await prismaClient.cart.findUnique({
-      where: { userId: req.user.id },
-    });
-
-    if (!cart) {
-      cart = await prismaClient.cart.create({
-        data: { userId: req.user.id },
+      await prismaClient.product.findUniqueOrThrow({
+        where: { id: validatedData.productId },
       });
-    }
 
-    // Check if the product is already in `that` cart
-    const existingCartItem = await prismaClient.cartItem.findFirst({
-      where: {
-        cartId: cart.id,
-        productId: validatedData.productId,
-      },
-    });
-
-    let cartItem;
-
-    if (existingCartItem) {
-      // Update quantity
-      cartItem = await prismaClient.cartItem.update({
-        where: { id: existingCartItem.id },
-        data: { quantity: existingCartItem.quantity + validatedData.quantity },
+      let cart = await prismaClient.cart.findUnique({
+        where: { userId: req.user.id },
       });
-    } else {
-      // Create new cart item
-      cartItem = await prismaClient.cartItem.create({
-        data: {
+
+      if (!cart) {
+        cart = await prismaClient.cart.create({
+          data: { userId: req.user.id },
+        });
+      }
+
+      // Check if the product is already in `that` cart
+      const existingCartItem = await prismaClient.cartItem.findFirst({
+        where: {
           cartId: cart.id,
           productId: validatedData.productId,
-          quantity: validatedData.quantity,
         },
       });
-    }
 
-    return res.status(200).json({ message: "Item added to cart", cartItem });
-  } catch (error: any) {
-    if (error instanceof ZodError) {
-      return res.status(400).json({
-        error: "Validation failed",
-        details: error.issues.map((issue) => issue.message),
+      let cartItem;
+
+      if (existingCartItem) {
+        // Update quantity
+        cartItem = await prismaClient.cartItem.update({
+          where: { id: existingCartItem.id },
+          data: { quantity: existingCartItem.quantity + validatedData.quantity },
+        });
+      } else {
+        // Create new cart item
+        cartItem = await prismaClient.cartItem.create({
+          data: {
+            cartId: cart.id,
+            productId: validatedData.productId,
+            quantity: validatedData.quantity,
+          },
+        });
+      }
+
+      return res.status(200).json({ message: "Item added to cart", cartItem });
+    } catch (error: any) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          error: "Validation failed",
+          details: error.issues.map((issue) => issue.message),
+        });
+      }
+      return res.status(500).json({
+        error: "Failed to add item to cart",
+        details: error.message,
       });
     }
-    return res.status(500).json({
-      error: "Failed to add item to cart",
-      details: error.message,
-    });
-  }
-};
+  };
 
 
 export const deleteItemsFromCart = async (req: Request, res: Response) => {
