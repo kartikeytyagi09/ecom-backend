@@ -4,7 +4,7 @@ import { prismaClient } from "..";
 import bcrypt from "bcrypt";
 import { LoginSchema, SignUpSchema } from "../models/user.schema";
 import { ZodError } from "zod";
-//error branch
+
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 
 export const signup = async (req: Request, res: Response) => {
