@@ -7,6 +7,8 @@ import orderRoutes from './routes/order.routes';
 import cookieParser from "cookie-parser";
 import dotenv from 'dotenv';
 import { PrismaClient } from "@prisma/client"; 
+
+
 dotenv.config({path: '.env'})
 
 const app = express();
@@ -34,7 +36,7 @@ async function startServer() {
     console.log("Database connected");
 
     app.listen(PORT, () => {
-      console.log("Server running at http://localhost:3000");
+      console.log("Server running at http://localhost:5000");
     });
   } catch (err) {
     console.error(" Database connection failed:", err);
