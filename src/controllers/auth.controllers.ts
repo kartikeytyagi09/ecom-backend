@@ -121,3 +121,24 @@ export const refresh = async(req:Request , res:Response)=>{
     return res.status(500).json({ error: "Failed to refresh token" });
   }
 } 
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    const rawToken = req.cookies.refreshToken;
+    if (rawToken) {
+      const tokenHash = hashToken(rawToken);
+      await prismaClient.refreshToken.updateMany({
+        where: { tokenHash },
+        data: { revoked: true },
+      });
+    }
+
+    res.clearCookie("accessToken", accessCookieOptions);
+    res.clearCookie("refreshToken", refreshCookieOptions);
+
+    return res.status(200).json({ message: "Logged out" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Logout failed" });
+  }
+};
