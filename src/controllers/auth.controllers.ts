@@ -4,6 +4,13 @@ import { prismaClient } from "..";
 import bcrypt from "bcrypt";
 import { LoginSchema, SignUpSchema } from "../models/user.schema";
 import { ZodError } from "zod";
+import{
+  ACCESS_TOKEN_EXPIRES_IN,
+  generateRefreshToken,
+  accessCookieOptions,
+  refreshCookieOptions
+} from "../utils/token"
+
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 
@@ -52,25 +59,32 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid credentials" });
     }
 
-    const token = jwt.sign(
+    const accesstoken = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn:ACCESS_TOKEN_EXPIRES_IN }
     );
 
-    res.cookie("token", token, {
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === "production", 
-      sameSite: "strict", 
-      maxAge: 24 * 60 * 60 * 1000, 
-    });
+    const {raw:refreshTokenRaw, hash:refreshTokenHash}= generateRefreshToken();
 
-    return res.status(200).json({ message: "Login successful", token });
+    // await prismaClient.refreshToken.create({
+    //   data: {
+    //     userId: user.id,
+    //     tokenHash: refreshTokenHash,
+    //     expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+    //   },
+    // });
+
+    res.cookie("accessToken", accesstoken, accessCookieOptions);
+    res.cookie("accessToken", refreshTokenRaw, refreshCookieOptions);
+
+    return res.status(200).json({ message: "Login successful"});
   } catch (error) {
     if (error instanceof ZodError) {
       return res.status(400).json({ err: "wrong input" });
     }
-    return res.status(500).json({ error: "Login failed", details: error });
+    console.log(error);
+    return res.status(500).json({ error: "Login failed"});
   }
 };
 

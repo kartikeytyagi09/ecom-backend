@@ -14,3 +14,19 @@ export function generateRefreshToken():{raw:string, hash:string}{
 const hashToken(raw:string):string{
     return crypto.createHash("sha256").update(raw).digest("hex");
 }
+
+const isProd= process.env.NODE_ENV==='production';
+
+export const accessCookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: "strict" as const,
+  maxAge: 15 * 60 * 1000, // 15 min, mirrors ACCESS_TOKEN_EXPIRES_IN
+};
+
+export const refreshCookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: "strict" as const,
+  maxAge: REFRESH_TOKEN_TTL_MS,
+};
