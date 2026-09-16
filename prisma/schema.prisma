@@ -23,9 +23,23 @@ model User {
   addresses Address[]
   cart Cart?
   order Order[]
+  refreshToken RefreshToken[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@map("users")
+}
+
+model RefreshToken{
+  id        Int      @id @default(autoincrement())
+  userId    Int 
+  user      User     @relation(fields: [userId], references: [id])
+  tokenHash String   @unique
+  expiresAt DateTime 
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
 }
 
 model Address{
@@ -48,7 +62,6 @@ enum Status {
   DELIVERED
   CANCELLED
 }
-
 model Order {
   id          Int         @id @default(autoincrement())
   userId      Int
@@ -61,7 +74,6 @@ model Order {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 }
-
 model OrderItem {
   id        Int      @id @default(autoincrement())
   orderId   Int
@@ -71,8 +83,6 @@ model OrderItem {
   quantity  Int
   price     Decimal  // snapshot of product price at purchase
 }
-
-
 model Product { 
   id    Int @id @default(autoincrement())
   name  String
@@ -84,7 +94,6 @@ model Product {
   cartItems CartItem[]
   orderItems OrderItem[]
 }
-
 model Cart {
   id        Int      @id @default(autoincrement())
   userId    Int      @unique
@@ -92,7 +101,6 @@ model Cart {
   items     CartItem[]
   updatedAt DateTime @updatedAt
 }
-
 model CartItem {
   id        Int      @id @default(autoincrement())
   cartId    Int

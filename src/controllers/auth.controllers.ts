@@ -8,7 +8,9 @@ import{
   ACCESS_TOKEN_EXPIRES_IN,
   generateRefreshToken,
   accessCookieOptions,
-  refreshCookieOptions
+  hashToken,
+  refreshCookieOptions,
+  REFRESH_TOKEN_TTL_MS
 } from "../utils/token"
 
 
@@ -59,7 +61,7 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid credentials" });
     }
 
-    const accesstoken = jwt.sign(
+    const accessToken = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
       { expiresIn:ACCESS_TOKEN_EXPIRES_IN }
@@ -67,15 +69,15 @@ export const login = async (req: Request, res: Response) => {
 
     const {raw:refreshTokenRaw, hash:refreshTokenHash}= generateRefreshToken();
 
-    // await prismaClient.refreshToken.create({
-    //   data: {
-    //     userId: user.id,
-    //     tokenHash: refreshTokenHash,
-    //     expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
-    //   },
-    // });
+    await prismaClient.refreshToken.create({
+      data: {
+        userId: user.id,
+        tokenHash: refreshTokenHash,
+        expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+      },
+    });
 
-    res.cookie("accessToken", accesstoken, accessCookieOptions);
+    res.cookie("accessToken", accessToken, accessCookieOptions);
     res.cookie("accessToken", refreshTokenRaw, refreshCookieOptions);
 
     return res.status(200).json({ message: "Login successful"});
@@ -88,5 +90,34 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
+export const refresh = async(req:Request , res:Response)=>{
+  try {
+    const rawToken = req.cookies.refreshToken;
 
+    if(!rawToken){
+      return res.status(401).json({error:"no refresh token proved"});
+    }
 
+    const tokenHash = hashToken(rawToken);
+    const stored = await prismaClient.refreshToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+    if (!stored || stored.revoked || stored.expiresAt < new Date()) {
+      return res.status(401).json({ error: "Invalid or expired refresh token" });
+    }
+
+    const accessToken = jwt.sign(
+      { id: stored.user.id, email: stored.user.email, role: stored.user.role },
+      JWT_SECRET,
+      { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
+    );
+
+    res.cookie("accessToken", accessToken, accessCookieOptions);
+
+    return res.status(200).json({ message: "Access token refreshed" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Failed to refresh token" });
+  }
+} 
