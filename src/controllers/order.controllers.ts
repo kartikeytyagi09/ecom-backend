@@ -35,25 +35,42 @@ export const createOrder = async (req: Request, res: Response) => {
     }, 0);
 
     // Create order
-    const order = await prismaClient.order.create({
-      data: {
-        userId,
-        addressId: finalAddressId,
-        totalAmount,
-        items: {
-          create: user.cart.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.product.price, 
-          })),
-        },
-      },
-      include: { items: true },
-    });
+    const cartId = user.cart.id;
+    const cartItems = user.cart.items;
 
-    // Clear cart
-    await prismaClient.cartItem.deleteMany({
-      where: { cartId: user.cart.id },
+    const order = await prismaClient.$transaction(async (tx) => {
+      for (const item of cartItems) {
+        const result = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.quantity } },
+          data: { stock: { decrement: item.quantity } },
+        });
+
+        if (result.count === 0) {
+          throw new Error(`INSUFFICIENT_STOCK:${item.product.name}`);
+        }
+      }
+
+      const createdOrder = await tx.order.create({
+        data: {
+          userId,
+          addressId: finalAddressId,
+          totalAmount,
+          items: {
+            create: cartItems.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.product.price,
+            })),
+          },
+        },
+        include: { items: true },
+      });
+
+      await tx.cartItem.deleteMany({
+        where: { cartId },
+      });
+
+      return createdOrder;
     });
 
     return res.status(201).json({
@@ -61,6 +78,10 @@ export const createOrder = async (req: Request, res: Response) => {
       order,
     });
   } catch (error: any) {
+    if (typeof error?.message === "string" && error.message.startsWith("INSUFFICIENT_STOCK:")) {
+      const productName = error.message.split(":")[1];
+      return res.status(409).json({ error: `Insufficient stock for "${productName}"` });
+    }
     console.error(error);
     return res.status(500).json({
       error: "Failed to create order",
@@ -68,7 +89,6 @@ export const createOrder = async (req: Request, res: Response) => {
     });
   }
 };
-
 
 export const listOrders = async (req: Request, res: Response) => {
   try {
