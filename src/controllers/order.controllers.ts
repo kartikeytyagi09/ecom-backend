@@ -116,7 +116,6 @@ export const listOrders = async (req: Request, res: Response) => {
   }
 };
 
-
 export const cancelOrder=async (req: Request, res: Response) =>{
   try {
     
@@ -178,7 +177,6 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Failed to update order status", details: error.message });
   }
 };
-
 
 export const adminListOrders = async (req: Request, res: Response) => {
   try {
