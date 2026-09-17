@@ -7,7 +7,7 @@ export const createProduct = async (req: Request, res: Response) => {
   try {
 
     const parsedData = ProductSchema.parse(req.body);
-    const { name, description, price, tags } = parsedData;
+    const { name, description, price,stock, tags } = parsedData;
 
 
     const product = await prismaClient.product.create({
@@ -15,6 +15,7 @@ export const createProduct = async (req: Request, res: Response) => {
         name,
         description,
         price,
+        stock,
         tags:  Array.isArray(tags) ? tags.join(".") : tags || "",
       },
     });

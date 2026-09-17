@@ -88,6 +88,7 @@ model Product {
   name  String
   description String @db.Text
   price Decimal  
+  stock Int @default(0)
   tags  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
