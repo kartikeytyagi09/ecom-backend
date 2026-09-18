@@ -90,31 +90,49 @@ export const createOrder = async (req: Request, res: Response) => {
   }
 };
 
-export const listOrders = async (req: Request, res: Response) => {
+export const listOrders= async(req:Request, res:Response)=>{
   try {
+    const userId= req.user?.id;
+    if(!userId){
+      return res.status(401).json({error:"Unauthorized"});}
 
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    const { page = "1", limit = "20", status } = req.query;
+    
+    const where :any= {userId};
+    const pageNum= Math.max(1, Number(page) || 1);
+    const limitNum =Math.max(1, Number(limit) || 20);
 
-    const orders = await prismaClient.order.findMany({
-      where: { userId },
-      include: {
-        items: {
-          include: { product: true }, 
+    const [orders, total]= await Promise.all([
+      prismaClient.order.findMany({
+        where,
+        include:{
+          items:{
+            include:{product:true},
+          },
+          address:true,
         },
-        address: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy:{createdAt:"desc"},
+        skip:(pageNum-1*limitNum),
+        take:limitNum,
+      }),
+      prismaClient.order.count({where}),
+    ]);
 
-    return res.status(200).json({ orders });
-  } catch (error: any) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ error: "Failed to fetch orders", details: error.message });
+    return res.status(200).json({
+      orders,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
+      
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({error:"failed to fetch order"});
   }
-};
+}
 
 export const cancelOrder=async (req: Request, res: Response) =>{
   try {
