@@ -80,13 +80,51 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
 export const listProduct = async (req: Request, res: Response) => {
   try {
-    const products = await prismaClient.product.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    const { page = "1", limit = "20", minPrice, maxPrice, tags, search } = req.query;
+
+    const where: any = {};
+
+    if (minPrice || maxPrice) {
+      where.price = {};
+      if (minPrice) where.price.gte = Number(minPrice);
+      if (maxPrice) where.price.lte = Number(maxPrice);
+    }
+
+    if (tags) {
+      const tagList = (tags as string).split(",").map((t) => t.trim()).filter(Boolean);
+      where.OR = tagList.map((t) => ({ tags: { contains: t } }));
+    }
+
+    if (search) {
+      const searchConditions = [
+        { name: { contains: search as string } },
+        { description: { contains: search as string } },
+      ];
+      where.OR = where.OR ? [...where.OR, ...searchConditions] : searchConditions;
+    }
+
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 20);
+
+    const [products, total] = await Promise.all([
+      prismaClient.product.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum,
+      }),
+      prismaClient.product.count({ where }),
+    ]);
 
     return res.status(200).json({
       message: "Products fetched successfully",
       products,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+      },
     });
   } catch (error: any) {
     console.error(error);
