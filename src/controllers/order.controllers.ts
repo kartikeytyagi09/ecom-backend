@@ -9,7 +9,21 @@ export const createOrder = async (req: Request, res: Response) => {
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     // Optional: allow client to send addressId
-    const { addressId } = req.body;
+    const { addressId, idempotencyKey } = req.body;
+
+    if(!idempotencyKey){
+      return res.status(400).json({error:"idempotency key is req"});
+    }
+
+    const existingOrder = await prismaClient.order.findUnique({
+      where: { idempotency },
+    });
+    if (existingOrder) {
+      return res.status(200).json({
+        message: "Order already exists for this request",
+        order: existingOrder,
+      });
+    }    
 
     const user = await prismaClient.user.findUnique({
       where: { id: userId },
@@ -55,6 +69,7 @@ export const createOrder = async (req: Request, res: Response) => {
           userId,
           addressId: finalAddressId,
           totalAmount,
+          idempotencyKey,
           items: {
             create: cartItems.map((item) => ({
               productId: item.productId,
@@ -81,6 +96,10 @@ export const createOrder = async (req: Request, res: Response) => {
     if (typeof error?.message === "string" && error.message.startsWith("INSUFFICIENT_STOCK:")) {
       const productName = error.message.split(":")[1];
       return res.status(409).json({ error: `Insufficient stock for "${productName}"` });
+    }
+    if (error?.code === "P2002" && error?.meta?.target?.includes("idempotencyKey")) {
+      const existing = await prismaClient.order.findUnique({ where: { idempotencyKey: req.body.idempotencyKey } });
+      return res.status(200).json({ message: "Order already exists for this request", order: existing });
     }
     console.error(error);
     return res.status(500).json({
