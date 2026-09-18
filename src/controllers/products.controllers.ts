@@ -82,6 +82,12 @@ export const listProduct = async (req: Request, res: Response) => {
   try {
     const { page = "1", limit = "20", minPrice, maxPrice, tags, search } = req.query;
 
+    //pagination 
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
+
+    // building filters
+
     const where: any = {};
 
     if (minPrice || maxPrice) {
@@ -90,10 +96,27 @@ export const listProduct = async (req: Request, res: Response) => {
       if (maxPrice) where.price.lte = Number(maxPrice);
     }
 
+    // tag filters
+
     if (tags) {
-      const tagList = (tags as string).split(",").map((t) => t.trim()).filter(Boolean);
-      where.OR = tagList.map((t) => ({ tags: { contains: t } }));
+      const tagList = (tags as string)
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+      if (tagList.length > 0) {
+        where.AND = [...(where.AND || []),
+          {
+            OR: tagList.map((tag) => ({
+              tags: {
+                contains: tag,
+              },
+            })),
+          },
+        ];
+      }
     }
+    
+    //search filter
 
     if (search) {
       const searchConditions = [
@@ -103,9 +126,7 @@ export const listProduct = async (req: Request, res: Response) => {
       where.OR = where.OR ? [...where.OR, ...searchConditions] : searchConditions;
     }
 
-    const pageNum = Math.max(1, Number(page) || 1);
-    const limitNum = Math.max(1, Number(limit) || 20);
-
+    //Databse query
     const [products, total] = await Promise.all([
       prismaClient.product.findMany({
         where,
@@ -115,7 +136,8 @@ export const listProduct = async (req: Request, res: Response) => {
       }),
       prismaClient.product.count({ where }),
     ]);
-
+    
+    //output
     return res.status(200).json({
       message: "Products fetched successfully",
       products,
